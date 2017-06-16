@@ -18,9 +18,9 @@ type PPMImage struct {
 	data          []PPMPixel
 }
 
-func readPPM(rd io.Reader) PPMImage {
+func readPPM(file io.Reader) PPMImage {
 	image := PPMImage{}
-	reader := bufio.NewReader(rd)
+	reader := bufio.NewReader(file)
 
 	line, err := reader.ReadString('\n')
 	if err != nil {
@@ -32,14 +32,11 @@ func readPPM(rd io.Reader) PPMImage {
 				log.Fatal(err)
 			} else {
 				fmt.Sscanf(size, "%d %d", &image.width, &image.height)
-				//fmt.Println("Width: ", image.width)
-				//fmt.Println("Height: ", image.height)
 				pixel, err := reader.ReadString('\n')
 				if err != nil {
 					log.Fatal(err)
 				} else {
 					if strings.Trim(pixel, "\n\t") == "255" {
-						//fmt.Println(pixel)
 					}
 				}
 			}
@@ -47,7 +44,6 @@ func readPPM(rd io.Reader) PPMImage {
 	}
 
 	size := image.width * image.height
-	//fmt.Println("size: ", size)
 
 	image.data = make([]PPMPixel, size)
 
@@ -58,9 +54,6 @@ func readPPM(rd io.Reader) PPMImage {
 		image.data[i] = PPMPixel{red: int(r), green: int(g), blue: int(b)}
 	}
 
-	/*for i := 0; i < size; i++ {
-		fmt.Println(image.data[i])
-	}*/
 	return image
 }
 
@@ -68,12 +61,11 @@ func Histogram(image PPMImage, h []float32) {
 	cols := image.width
 	rows := image.height
 	n := rows * cols
-	//fmt.Println("value of N: ", n)
+
 	for i := 0; i < n; i++ {
 		image.data[i].red = (image.data[i].red * 4) / 256
 		image.data[i].blue = (image.data[i].blue * 4) / 256
 		image.data[i].green = (image.data[i].green * 4) / 256
-		//fmt.Println(image.data[i])
 	}
 
 	count := 0
@@ -92,7 +84,6 @@ func Histogram(image PPMImage, h []float32) {
 			}
 		}
 	}
-	//return h
 }
 
 func main() {
