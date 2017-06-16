@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"sync"
 )
 
 type PPMPixel struct {
@@ -32,11 +33,14 @@ func readPPM(file io.Reader) PPMImage {
 				log.Fatal(err)
 			} else {
 				fmt.Sscanf(size, "%d %d", &image.width, &image.height)
+				//fmt.Println("Width: ", image.width)
+				//fmt.Println("Height: ", image.height)
 				pixel, err := reader.ReadString('\n')
 				if err != nil {
 					log.Fatal(err)
 				} else {
 					if strings.Trim(pixel, "\n\t") == "255" {
+						//fmt.Println(pixel)
 					}
 				}
 			}
@@ -44,6 +48,7 @@ func readPPM(file io.Reader) PPMImage {
 	}
 
 	size := image.width * image.height
+	//fmt.Println("size: ", size)
 
 	image.data = make([]PPMPixel, size)
 
@@ -54,42 +59,51 @@ func readPPM(file io.Reader) PPMImage {
 		image.data[i] = PPMPixel{red: int(r), green: int(g), blue: int(b)}
 	}
 
+	/*for i := 0; i < size; i++ {
+		fmt.Println(image.data[i])
+	}*/
 	return image
 }
 
-func Histogram(image PPMImage, h []float32) {
+func split_task(image PPMImage, x, j, k, l int, wg *sync.WaitGroup, h []float32) {
+	defer wg.Done()
+	count := 0
+	for i := 0; i < (image.width * image.height); i++ {
+		if image.data[i].red == j && image.data[i].green == k && image.data[i].blue == l {
+			count++
+		}
+		h[x] = float32(count) / float32((image.width * image.height))
+	}
+}
+
+func histogram(image PPMImage, h []float32) {
 	cols := image.width
 	rows := image.height
-	n := rows * cols
 
-	for i := 0; i < n; i++ {
+	for i := 0; i < (rows * cols); i++ {
 		image.data[i].red = (image.data[i].red * 4) / 256
 		image.data[i].blue = (image.data[i].blue * 4) / 256
 		image.data[i].green = (image.data[i].green * 4) / 256
 	}
+	wg := sync.WaitGroup{}
+	wg.Add(64)
 
-	count := 0
 	x := 0
 	for j := 0; j <= 3; j++ {
 		for k := 0; k <= 3; k++ {
 			for l := 0; l <= 3; l++ {
-				for i := 0; i < n; i++ {
-					if image.data[i].red == j && image.data[i].green == k && image.data[i].blue == l {
-						count++
-					}
-				}
-				h[x] = float32(count) / float32(n)
-				count = 0
+				go split_task(image, x, j, k, l, &wg, h)
 				x = x + 1
 			}
 		}
 	}
+	wg.Wait()
 }
 
 func main() {
 	image := readPPM(os.Stdin)
 	h := make([]float32, 64)
-	Histogram(image, h)
+	histogram(image, h)
 	for i := 0; i < len(h); i++ {
 		fmt.Printf("%0.3f ", h[i])
 	}
