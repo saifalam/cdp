@@ -66,8 +66,8 @@ func split_board(board GOL, splitTask chan data) {
 
 func combine_board(board GOL, combineTask <-chan data) GOL {
 	newBoard := make_board(board.size)
-	total_chunk := int(math.Ceil(float64(board.size / runtime.NumCPU())))
-	for i := 0; i <= total_chunk; i++ {
+	total_chunk := int(math.Ceil(float64(float32(board.size) / float32(runtime.NumCPU()))))
+	for i := 0; i < total_chunk; i++ {
 		result := <-combineTask
 		k := result.chunkid * result.chunkSize
 		for r, s := k, 1; r < k+result.chunkSize && r < board.size; r++ {
@@ -105,8 +105,8 @@ func adjacent_cell(board [][]int, col, row, i, j int) int {
 		el = j
 	}
 
-	for k := sk; k <= ek; k++ {
-		for l := sl; l <= el; l++ {
+	for k := sk; k <= ek; k++ { //rows
+		for l := sl; l <= el; l++ { //cols
 			count += board[k][l]
 		}
 	}
@@ -118,20 +118,17 @@ func game_rules(input data) data {
 	col := len(input.splitBoard[0])
 	row := len(input.splitBoard)
 	newChunk := make_chunk(input.chunkid, input.chunkSize, col)
-	for i := 0; i < input.chunkSize+2; i++ {
+	for i := 1; i <= input.chunkSize; i++ {
 		for j := 0; j < col; j++ {
 			count := adjacent_cell(input.splitBoard, col, row, i, j)
 
 			if count == 2 {
 				newChunk.splitBoard[i][j] = input.splitBoard[i][j]
-			}
-			if count == 3 {
+			} else if count == 3 {
 				newChunk.splitBoard[i][j] = 1
-			}
-			if count < 2 {
+			} else if count < 2 {
 				newChunk.splitBoard[i][j] = 0
-			}
-			if count > 3 {
+			} else { //if count > 3
 				newChunk.splitBoard[i][j] = 0
 			}
 		}
@@ -152,10 +149,10 @@ func worker(splitTask <-chan data, combineTask chan<- data) {
 }
 
 func play(board GOL) GOL {
-	newboard := make_board(board.size)
+	newBoard := make_board(board.size)
 	go split_board(board, splitTask)
-	newboard = combine_board(board, combineTask)
-	return newboard
+	newBoard = combine_board(board, combineTask)
+	return newBoard
 }
 
 //print the life board
@@ -164,7 +161,7 @@ func printBoard(board GOL) {
 	for j := 0; j < board.size; j++ {
 		// print each column position
 		for i := 0; i < board.size; i++ {
-			if board.board[i][j] == 1 {
+			if board.board[j][i] == 1 {
 				fmt.Print("x")
 			} else {
 				fmt.Print(" ")
@@ -192,8 +189,8 @@ func read_file(scanner *bufio.Scanner) (int, GOL) {
 	initialBoard.size = size
 	for i := 0; i < size; i++ {
 		if scanner.Scan() {
-			ipText := scanner.Text()
-			for j, x := range ipText {
+			input := scanner.Text()
+			for j, x := range input {
 				if x == 'x' {
 					initialBoard.board[i][j] = 1
 				}

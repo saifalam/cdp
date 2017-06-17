@@ -5,7 +5,8 @@ FLAGS=-O3
 all: life
 
 life: life.c
-	$(CC) $(FLAGS) life.c -o life
+	#$(CC) $(FLAGS) life.c -o life
+	go build -o life life.go
 
 clean:
 	rm -f life
