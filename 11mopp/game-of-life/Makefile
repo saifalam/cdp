@@ -4,7 +4,7 @@ FLAGS=-O3
 
 all: life
 
-life: life.c
+life: life.go
 	#$(CC) $(FLAGS) life.c -o life
 	go build -o life life.go
 
