@@ -23,18 +23,16 @@ func readPPM(file io.Reader) PPMImage {
 	image := PPMImage{}
 	reader := bufio.NewReader(file)
 
-	line, err := reader.ReadString('\n')
+	PPMType, err := reader.ReadString('\n')
 	if err != nil {
 		log.Fatal(err)
 	} else {
-		if strings.Trim(line, "\n\t") == "P6" {
+		if strings.Trim(PPMType, "\n\t") == "P6" {
 			size, err := reader.ReadString('\n')
 			if err != nil {
 				log.Fatal(err)
 			} else {
 				fmt.Sscanf(size, "%d %d", &image.width, &image.height)
-				//fmt.Println("Width: ", image.width)
-				//fmt.Println("Height: ", image.height)
 				pixel, err := reader.ReadString('\n')
 				if err != nil {
 					log.Fatal(err)
@@ -48,8 +46,6 @@ func readPPM(file io.Reader) PPMImage {
 	}
 
 	size := image.width * image.height
-	//fmt.Println("size: ", size)
-
 	image.data = make([]PPMPixel, size)
 
 	for i := 0; i < size; i++ {
@@ -58,13 +54,10 @@ func readPPM(file io.Reader) PPMImage {
 		b, _ := reader.ReadByte()
 		image.data[i] = PPMPixel{red: int(r), green: int(g), blue: int(b)}
 	}
-
-	/*for i := 0; i < size; i++ {
-		fmt.Println(image.data[i])
-	}*/
 	return image
 }
 
+//parallel function, distributed in cores
 func split_task(image PPMImage, x, j, k, l int, wg *sync.WaitGroup, h []float32) {
 	defer wg.Done()
 	count := 0
@@ -77,10 +70,8 @@ func split_task(image PPMImage, x, j, k, l int, wg *sync.WaitGroup, h []float32)
 }
 
 func histogram(image PPMImage, h []float32) {
-	cols := image.width
-	rows := image.height
 
-	for i := 0; i < (rows * cols); i++ {
+	for i := 0; i < (image.width * image.height); i++ {
 		image.data[i].red = (image.data[i].red * 4) / 256
 		image.data[i].blue = (image.data[i].blue * 4) / 256
 		image.data[i].green = (image.data[i].green * 4) / 256
@@ -92,7 +83,7 @@ func histogram(image PPMImage, h []float32) {
 	for j := 0; j <= 3; j++ {
 		for k := 0; k <= 3; k++ {
 			for l := 0; l <= 3; l++ {
-				go split_task(image, x, j, k, l, &wg, h)
+				go split_task(image, x, j, k, l, &wg, h) //parallel code calling
 				x = x + 1
 			}
 		}
