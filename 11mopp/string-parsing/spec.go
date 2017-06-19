@@ -52,20 +52,15 @@ func read_input(scanner *bufio.Scanner) Grammar {
 			productionRule = ProductionRule{left: content[0], right: strings.Fields(content[1])}
 			//fmt.Println("left rule: ", productionRule.left, "right rule: ", productionRule.right)
 			grammar.productions = append(grammar.productions, productionRule)
+			//fmt.Println("scanner Text: ", scanner.Text())
 		}
-
+		//fmt.Println(grammar.productions)
 	}
-	/*fmt.Println(grammar.analyzeString)
-	fmt.Println(grammar.terminalSymbols)
-	fmt.Println(grammar.nonTerminalSymbols)
-	fmt.Println(grammar.startSymbol)
-	fmt.Println(len(grammar.productions))
 
 	for i := 0; i < len(grammar.productions); i++ {
-		fmt.Println(grammar.productions[i])
-	}*/
+		fmt.Println("From Outside loop: ", grammar.productions[i])
+	}
 	return grammar
-
 }
 
 func common_prefix(s1, s2 []string) []string {
@@ -78,19 +73,27 @@ func common_prefix(s1, s2 []string) []string {
 		}
 	}
 	return commonPrefix
-
 }
 
-func eliminate_common_prefix(currentString, inputString []string) ([]string, []string) {
-	var current []string
-	var input []string
+func remove_prefix(prefix, s []string) []string {
+	var result []string
+	if prefix != nil && len(prefix) > 0 {
+		for i := 0; i < len(s); i++ {
+			if i >= len(prefix) {
+				result = append(result, s[i])
+			}
+		}
+	}
+	return result
+}
 
+func eliminate_common_prefix(currentString, inputString []string) []string {
 	fmt.Println(currentString, "  ", inputString)
-
 	commonPrefix := common_prefix(currentString, inputString)
 	//fmt.Println(commonPrefix, "  ", len(commonPrefix))
 
-	if commonPrefix != nil && len(commonPrefix) > 0 {
+	current := remove_prefix(commonPrefix, currentString)
+	/*if commonPrefix != nil && len(commonPrefix) > 0 {
 		for i := 0; i < len(currentString); i++ {
 			if i >= len(commonPrefix) {
 				current = append(current, currentString[i])
@@ -102,8 +105,40 @@ func eliminate_common_prefix(currentString, inputString []string) ([]string, []s
 			}
 		}
 		//fmt.Println(current, " ", input)
+	}*/
+	return current
+}
+
+func is_terminal(g Grammar, s []string) bool {
+	for i := 0; i < len(g.terminalSymbols); i++ {
+		if g.terminalSymbols[i] == s[0] {
+			//fmt.Println("From is terminal: ", g.terminalSymbols[i])
+			return true
+		}
 	}
-	return current, input
+	return false
+}
+
+func is_nonterminal(g Grammar, s []string) bool {
+	return !is_terminal(g, s)
+}
+
+func exists_non_terminal(g Grammar, s []string) bool {
+	if s != nil && len(s) > 0 {
+		if is_nonterminal(g, s) {
+			return true
+		}
+	}
+	return false
+}
+
+func begins_with_terminal(g Grammar, s []string) bool {
+	if s != nil && len(s) > 0 {
+		if is_terminal(g, s) {
+			return true
+		}
+	}
+	return false
 }
 
 func evaluate_string_parsing(grammar Grammar) {
@@ -111,11 +146,28 @@ func evaluate_string_parsing(grammar Grammar) {
 	eval.inputString = grammar.analyzeString
 	for i := 0; i < len(grammar.productions); i++ {
 		eval.currentString = grammar.productions[i].right
-		// Rule no: 01 (Eliminate common prefix)
-		current, input := eliminate_common_prefix(eval.currentString, eval.inputString)
-		fmt.Println(current, " ", input)
-	}
 
+		//Rule no: 01 (Eliminate common prefix)
+		eval.currentString = eliminate_common_prefix(eval.currentString, eval.inputString)
+		fmt.Println(eval.currentString)
+
+		//Rule no: 02 (Is the initial symbol terminal)
+		res := begins_with_terminal(grammar, eval.currentString)
+		fmt.Println("Is terminal result: ", res)
+
+		//Rule no: 03 (Both current and input string empty or not)
+		if eval.inputString == nil {
+			if eval.currentString == nil {
+				//return (Need to return 	<eval.productions, true>)
+			}
+			if !exists_non_terminal(grammar, eval.currentString) {
+				//return (Need to return 	<eval.productions, false>)
+			}
+		}
+
+		//Rule no: 05 (Try all derivations recursively)
+
+	}
 }
 
 func main() {
@@ -124,6 +176,7 @@ func main() {
 		log.Fatal(err)
 	} else {
 		grammar := read_input(reader)
+		fmt.Println(grammar)
 		evaluate_string_parsing(grammar)
 	}
 }
