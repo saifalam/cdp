@@ -43,24 +43,15 @@ func read_input(scanner *bufio.Scanner) Grammar {
 	if scanner.Scan() {
 		grammar.startSymbol = strings.Fields(scanner.Text())
 	}
-	//fmt.Println(grammar.analyzeString)
-	//fmt.Println(grammar.terminalSymbols)
-	//fmt.Println(grammar.nonTerminalSymbols)
-	//fmt.Println(grammar.startSymbol)
 	for scanner.Scan() {
-		if scanner.Text() != "-" {
-			content := strings.Split(scanner.Text(), ":")
+		if strings.Trim(scanner.Text(), "\n\t") != "-" {
+			content := strings.Split(strings.Trim(scanner.Text(), "\n\t"), ":")
 			productionRule = ProductionRule{left: strings.Fields(content[0]), right: strings.Fields(content[1])}
-			//fmt.Println("left rule: ", productionRule.left, "right rule: ", productionRule.right)
 			grammar.productions = append(grammar.productions, productionRule)
-			//fmt.Println("scanner Text: ", scanner.Text())
+		} else {
+			break
 		}
-		//fmt.Println(grammar.productions)
 	}
-
-	/*for i := 0; i < len(grammar.productions); i++ {
-		fmt.Println("From Outside loop: ", grammar.productions[i])
-	}*/
 	return grammar
 }
 
@@ -74,18 +65,22 @@ func any_empty(s Stack) bool {
 	return false
 }
 func reduce(s Stack) Stack {
-	fmt.Println(s)
 	if any_empty(s) {
 		return s
 	}
 	s.currentString, s.inputString = eliminate_common_prefix(s.currentString, s.inputString)
-	fmt.Println("From reduce: ", s.currentString, " ", s.inputString)
 	return s
 }
 
-func common_prefix(s1, s2 []string) []string {
+func common_prefix(s1, s2 []string) []string { // s1 = currentString && s2 = inputString
 	var commonPrefix []string
-	for i := 0; i < len(s1); i++ {
+	var lenght int
+	if len(s1) >= len(s2) {
+		lenght = len(s2)
+	} else {
+		lenght = len(s1)
+	}
+	for i := 0; i < lenght; i++ {
 		if s1[i] != s2[i] {
 			return commonPrefix
 		} else {
@@ -108,22 +103,18 @@ func remove_prefix(prefix, s []string) []string {
 }
 
 func eliminate_common_prefix(currentString, inputString []string) ([]string, []string) {
-	fmt.Println(currentString, "  ", inputString)
 	commonPrefix := common_prefix(currentString, inputString)
-	fmt.Println(commonPrefix, "  ", len(commonPrefix))
 	if (commonPrefix != nil) && (len(commonPrefix) > 0) {
 		current := remove_prefix(commonPrefix, currentString)
 		input := remove_prefix(commonPrefix, inputString)
 		return current, input
 	}
-
 	return currentString, inputString
 }
 
 func is_terminal(g Grammar, s []string) bool {
 	for i := 0; i < len(g.terminalSymbols); i++ {
 		if g.terminalSymbols[i] == s[0] {
-			//fmt.Println("From is terminal: ", g.terminalSymbols[i])
 			return true
 		}
 	}
@@ -136,8 +127,10 @@ func is_nonterminal(g Grammar, s []string) bool {
 
 func exists_non_terminal(g Grammar, s []string) bool {
 	if s != nil && len(s) > 0 {
-		if is_nonterminal(g, s) {
-			return true
+		for i := 0; i < len(g.nonTerminalSymbols); i++ {
+			if g.nonTerminalSymbols[i] == s[0] {
+				return true
+			}
 		}
 	}
 	return false
@@ -168,80 +161,90 @@ func evaluate_leftmost_derivation(g Grammar, s []string) []string {
 }
 
 func find_left_most_nonterminal(g Grammar, currentString []string) []string {
-	fmt.Println("From Left most non terminal", currentString)
 	var LMNonTerminal []string
 	for i := 0; i < len(currentString); i++ {
-		if is_nonterminal(g, strings.Fields(currentString[i])) {
-			LMNonTerminal = append(LMNonTerminal, currentString[i])
+		if is_nonterminal(g, strings.Fields(strings.Trim(currentString[i], "\n\t"))) {
+			LMNonTerminal = append(LMNonTerminal, strings.Trim(currentString[i], "\n\t"))
 			return LMNonTerminal
 		}
 	}
 	return LMNonTerminal
 }
 
-func get_all_terminals_after_nonterminal(g Grammar, s []string) []string {
-	var terminals []string
-	for i := 0; i < len(s); i++ {
-		if is_terminal(g, strings.Fields(s[i])) {
-			terminals = append(terminals, s[i])
-			return terminals
+func get_all_strings_after_nonterminal(g Grammar, s []string) []string {
+	var result []string
+	for i := 1; i < len(s); i++ {
+		result = append(result, s[i])
+	}
+	return result
+}
+
+func remove_all_rules(s Stack) Stack {
+	if s.productions != nil {
+		emptySlice := make([]string, 0)
+		for i := 0; i < len(s.productions); i++ {
+			s.productions[i].left = emptySlice
+			s.productions[i].right = emptySlice
 		}
 	}
-	return terminals
+	return s
 }
 
 func evaluate_string_parsing(grammar Grammar, eval Stack) Stack {
-	fmt.Println("before reduce: ", eval.currentString, " ", eval.inputString)
 
-	//Rule no: 01 (Eliminate common prefix)
-	eval = reduce(eval)
-	fmt.Println("From Eval: ", eval.currentString, " ", eval.inputString)
+	// Rule no: 01 (Eliminate common prefix)
+	reducedEval := reduce(eval)
 
 	//Rule no: 02 (Is the initial symbol terminal)
-	if begins_with_terminal(grammar, eval.currentString) {
-		eval.result = false
-		fmt.Println("From 02")
-		return eval
+	if begins_with_terminal(grammar, reducedEval.currentString) {
+		reducedEval.result = false
+		return reducedEval
 	}
 
-	//Rule no: 03 (Both current and input string empty or not)
-	if eval.inputString == nil {
-		if eval.currentString == nil {
-			eval.result = true
-			fmt.Println("From 03 01", eval.inputString, " ", eval.currentString)
-			return eval //return (Need to return 	<eval.productions, true>)
+	// Rule no: 03 (Both current and input string empty or not)
+	if reducedEval.inputString == nil || to_string(reducedEval.inputString) == "" {
+		if reducedEval.currentString == nil || to_string(reducedEval.currentString) == "" {
+			reducedEval.result = true
+			return reducedEval //return (Need to return 	<eval.productions, true>)
 		}
-		//Rule no: 04
-		if !exists_non_terminal(grammar, eval.currentString) {
-			eval.result = false
-			fmt.Println("From 03 02")
-			return eval //return (Need to return 	<eval.productions, false>)
+		// Rule no: 04
+		if !exists_non_terminal(grammar, reducedEval.currentString) {
+			reducedEval.result = false
+			return reducedEval //return (Need to return 	<eval.productions, false>)
 		}
 	}
-	//Rule no: 05 (Try all derivations recursively)
-	LMNonTerminal := find_left_most_nonterminal(grammar, eval.currentString)
-	fmt.Println("Left most non terminal", LMNonTerminal)
+	// Rule no: 05 (Try all derivations recursively)
+	LMNonTerminal := find_left_most_nonterminal(grammar, reducedEval.currentString)
 
 	if LMNonTerminal != nil {
 		LMDerivations := evaluate_leftmost_derivation(grammar, LMNonTerminal)
-		fmt.Println(LMDerivations, " ", len(LMDerivations))
 
 		if (LMDerivations != nil) && (len(LMDerivations) > 0) {
-			allTerminals := get_all_terminals_after_nonterminal(grammar, eval.currentString)
-			fmt.Println("All terminals for ", eval.currentString, " is ", allTerminals)
+			restPart := get_all_strings_after_nonterminal(grammar, reducedEval.currentString)
 
 			for i := 0; i < len(LMDerivations); i++ {
-				eval.currentString = strings.Fields(LMDerivations[i])
+				reducedEval.currentString = strings.Fields(LMDerivations[i])
 
-				if allTerminals != nil && (len(allTerminals) > 0) {
-					eval.currentString = append(eval.currentString, to_string(allTerminals))
+				if restPart != nil && (len(restPart) > 0) {
+					for j := 0; j < len(restPart); j++ {
+						reducedEval.currentString = append(reducedEval.currentString, restPart[j])
+					}
+
 				}
-				//Rule no: 6 (recursive calling)
-				return evaluate_string_parsing(grammar, eval)
+
+				// Rule no: 6 (recursive calling)
+				evaluation := evaluate_string_parsing(grammar, reducedEval)
+				if evaluation.result {
+					productionRule := ProductionRule{left: LMNonTerminal, right: strings.Fields(LMDerivations[i])}
+					evaluation.productions = append(evaluation.productions, productionRule)
+					return evaluation
+				} else {
+					evaluate_string_parsing(grammar, evaluation)
+				}
 			}
 		}
 	}
-	return eval
+	return reducedEval
 }
 
 func parse_recursive_descent(g Grammar) Stack {
@@ -251,6 +254,17 @@ func parse_recursive_descent(g Grammar) Stack {
 	return evaluate_string_parsing(g, eval)
 }
 
+func print_output(s Stack) {
+	if s.result {
+		for i := len(s.productions) - 1; i >= 0; i-- {
+			fmt.Println(to_string(s.productions[i].left), ":", to_string(s.productions[i].right))
+		}
+		fmt.Println("SUCCESS")
+	} else {
+		fmt.Println("FAILED")
+	}
+}
+
 func main() {
 	reader := bufio.NewScanner(os.Stdin)
 	if err := reader.Err(); err != nil {
@@ -258,6 +272,6 @@ func main() {
 	} else {
 		grammar := read_input(reader)
 		eval := parse_recursive_descent(grammar)
-		fmt.Println("From main: ", eval, "  ", eval.result)
+		print_output(eval)
 	}
 }
