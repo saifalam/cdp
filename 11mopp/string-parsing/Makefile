@@ -5,6 +5,7 @@ all : spec
 clean :
 	rm -rf spec *dSYM*
 
-spec : spec.cc spec.hh
-	g++ -std=c++11 -Wall -Wextra -O3 spec.cc -o spec
+spec : spec.go
+	#g++ -std=c++11 -Wall -Wextra -O3 spec.cc -o spec
+	go build -o spec spec.go
 
