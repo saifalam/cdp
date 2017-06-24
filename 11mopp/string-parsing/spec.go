@@ -191,7 +191,6 @@ func remove_all_rules(s Stack) Stack {
 }
 
 func evaluate_string_parsing(grammar Grammar, eval Stack) Stack {
-
 	// Rule no: 01 (Eliminate common prefix)
 	reducedEval := reduce(eval)
 
@@ -229,7 +228,6 @@ func evaluate_string_parsing(grammar Grammar, eval Stack) Stack {
 					for j := 0; j < len(restPart); j++ {
 						reducedEval.currentString = append(reducedEval.currentString, restPart[j])
 					}
-
 				}
 
 				// Rule no: 6 (recursive calling)
@@ -239,7 +237,7 @@ func evaluate_string_parsing(grammar Grammar, eval Stack) Stack {
 					evaluation.productions = append(evaluation.productions, productionRule)
 					return evaluation
 				} else {
-					evaluate_string_parsing(grammar, evaluation)
+					go evaluate_string_parsing(grammar, evaluation)
 				}
 			}
 		}
