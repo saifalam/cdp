@@ -29,11 +29,19 @@ func readPPM(file io.Reader) PPMImage {
 	} else {
 		if strings.Trim(PPMType, "\n\t") == "P6" {
 			size, err := reader.ReadString('\n')
+			//fmt.Println("Size: ", size)
 			if err != nil {
 				log.Fatal(err)
 			} else {
 				fmt.Sscanf(size, "%d %d", &image.width, &image.height)
+				//fmt.Println(image.width, image.height)
+				if image.width == 0 || image.height == 0 {
+					extra, _ := reader.ReadString('\n')
+					fmt.Sscanf(extra, "%d %d", &image.width, &image.height)
+					//fmt.Println("Inner Loop: ", image.width, image.height)
+				}
 				pixel, err := reader.ReadString('\n')
+				//fmt.Println("Pixel:", pixel)
 				if err != nil {
 					log.Fatal(err)
 				} else {
@@ -60,6 +68,7 @@ func readPPM(file io.Reader) PPMImage {
 //parallel function, distributed in cores
 func split_task(image PPMImage, x, j, k, l int, wg *sync.WaitGroup, h []float32) {
 	defer wg.Done()
+	//fmt.Println("From Split task: ")
 	count := 0
 	for i := 0; i < (image.width * image.height); i++ {
 		if image.data[i].red == j && image.data[i].green == k && image.data[i].blue == l {
