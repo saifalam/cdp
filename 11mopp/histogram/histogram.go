@@ -71,7 +71,7 @@ func readPPM(file io.Reader) PPMImage {
 		r, _ := reader.ReadByte()
 		g, _ := reader.ReadByte()
 		b, _ := reader.ReadByte()
-		image.data[i] = PPMPixel{red: int(r), green: int(g), blue: int(b)}
+		image.data[i] = PPMPixel{red: (int(r) * 4) / 256, green: (int(g) * 4) / 256, blue: (int(b) * 4) / 256}
 	}
 	return image
 }
@@ -89,33 +89,15 @@ func split_task(image PPMImage, x, j, k, l int, wg *sync.WaitGroup, h []float32)
 	}
 }
 
-func prepare(image *PPMImage, wg *sync.WaitGroup) {
-	defer wg.Done()
-	for i := 0; i < (image.width * image.height); i++ {
-		image.data[i].red = (image.data[i].red * 4) / 256
-		image.data[i].blue = (image.data[i].blue * 4) / 256
-		image.data[i].green = (image.data[i].green * 4) / 256
-	}
-}
-
-func prepare_image(image *PPMImage) {
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-	go prepare(image, &wg)
-	wg.Wait()
-}
-
 func histogram(image PPMImage, h []float32) {
-
-	//prepare_image(&image)
-	for i := 0; i < (image.width * image.height); i++ {
-		image.data[i].red = (image.data[i].red * 4) / 256
-		image.data[i].blue = (image.data[i].blue * 4) / 256
-		image.data[i].green = (image.data[i].green * 4) / 256
-	}
-
 	wg := sync.WaitGroup{}
 	wg.Add(64)
+
+	/*for i := 0; i < (image.width * image.height); i++ {
+		image.data[i].red = (image.data[i].red * 4) / 256
+		image.data[i].blue = (image.data[i].blue * 4) / 256
+		image.data[i].green = (image.data[i].green * 4) / 256
+	}*/
 
 	x := 0
 	for j := 0; j <= 3; j++ {
