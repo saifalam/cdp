@@ -19,6 +19,13 @@ type PPMImage struct {
 	data          []PPMPixel
 }
 
+func content_satrt_with_hash(content string) bool {
+	if content[0] == '#' {
+		return true
+	}
+	return false
+}
+
 func readPPM(file io.Reader) PPMImage {
 	image := PPMImage{}
 	reader := bufio.NewReader(file)
@@ -27,24 +34,28 @@ func readPPM(file io.Reader) PPMImage {
 	if err != nil {
 		log.Fatal(err)
 	} else {
+		for content_satrt_with_hash(PPMType) {
+			PPMType, _ = reader.ReadString('\n')
+		}
 		if strings.Trim(PPMType, "\n\t") == "P6" {
 			size, err := reader.ReadString('\n')
 			//fmt.Println("Size: ", size)
 			if err != nil {
 				log.Fatal(err)
 			} else {
+				for content_satrt_with_hash(size) {
+					size, _ = reader.ReadString('\n')
+				}
 				fmt.Sscanf(size, "%d %d", &image.width, &image.height)
 				//fmt.Println(image.width, image.height)
-				if image.width == 0 || image.height == 0 {
-					extra, _ := reader.ReadString('\n')
-					fmt.Sscanf(extra, "%d %d", &image.width, &image.height)
-					//fmt.Println("Inner Loop: ", image.width, image.height)
-				}
 				pixel, err := reader.ReadString('\n')
 				//fmt.Println("Pixel:", pixel)
 				if err != nil {
 					log.Fatal(err)
 				} else {
+					for content_satrt_with_hash(pixel) {
+						pixel, _ = reader.ReadString('\n')
+					}
 					if strings.Trim(pixel, "\n\t") == "255" {
 						//fmt.Println(pixel)
 					}
@@ -78,13 +89,31 @@ func split_task(image PPMImage, x, j, k, l int, wg *sync.WaitGroup, h []float32)
 	}
 }
 
-func histogram(image PPMImage, h []float32) {
-
+func prepare(image *PPMImage, wg *sync.WaitGroup) {
+	defer wg.Done()
 	for i := 0; i < (image.width * image.height); i++ {
 		image.data[i].red = (image.data[i].red * 4) / 256
 		image.data[i].blue = (image.data[i].blue * 4) / 256
 		image.data[i].green = (image.data[i].green * 4) / 256
 	}
+}
+
+func prepare_image(image *PPMImage) {
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go prepare(image, &wg)
+	wg.Wait()
+}
+
+func histogram(image PPMImage, h []float32) {
+
+	//prepare_image(&image)
+	for i := 0; i < (image.width * image.height); i++ {
+		image.data[i].red = (image.data[i].red * 4) / 256
+		image.data[i].blue = (image.data[i].blue * 4) / 256
+		image.data[i].green = (image.data[i].green * 4) / 256
+	}
+
 	wg := sync.WaitGroup{}
 	wg.Add(64)
 
