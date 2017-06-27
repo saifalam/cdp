@@ -22,6 +22,7 @@ type data struct {
 	chunkSize, chunkid int
 }
 
+//chunk of data per splited task to be executed every time
 func make_chunk(chunkid, chunkSize, col int) data {
 	newchunk := data{}
 	newchunk.chunkSize = chunkSize //middle rows (need to work with how may rows)
@@ -33,6 +34,7 @@ func make_chunk(chunkid, chunkSize, col int) data {
 	return newchunk
 }
 
+// assign data in every chunk prepared for every split task
 func assign_data(board GOL, chunkId, i, totalRow, chunkSize int) data {
 	dataChunk := make_chunk(chunkId, chunkSize, board.size)
 
@@ -55,6 +57,7 @@ func assign_data(board GOL, chunkId, i, totalRow, chunkSize int) data {
 	return dataChunk
 }
 
+// split the board to create a chunk of data to be executed
 func split_board(board GOL, splitTask chan data) {
 	chunkId := 0
 	chunkSize := runtime.NumCPU()
@@ -64,6 +67,7 @@ func split_board(board GOL, splitTask chan data) {
 	}
 }
 
+// combine every splited task result to get the accumulated or final result
 func combine_board(board GOL, combineTask <-chan data) GOL {
 	newBoard := make_board(board.size)
 	total_chunk := int(math.Ceil(float64(float32(board.size) / float32(runtime.NumCPU()))))
@@ -211,7 +215,6 @@ func main() {
 		steps, board := read_file(reader)
 		for i := 0; i < steps; i++ {
 			board = play(board)
-			//printBoard(board)
 		}
 		printBoard(board)
 	}
