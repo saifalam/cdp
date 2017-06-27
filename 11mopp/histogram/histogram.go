@@ -26,6 +26,7 @@ func content_satrt_with_hash(content string) bool {
 	return false
 }
 
+//Read input image
 func readPPM(file io.Reader) PPMImage {
 	image := PPMImage{}
 	reader := bufio.NewReader(file)
@@ -77,7 +78,7 @@ func readPPM(file io.Reader) PPMImage {
 }
 
 //parallel function, distributed in cores
-func split_task(image PPMImage, x, j, k, l int, wg *sync.WaitGroup, h []float32) {
+func parallel_task(image PPMImage, x, j, k, l int, wg *sync.WaitGroup, h []float32) {
 	defer wg.Done()
 	//fmt.Println("From Split task: ")
 	count := 0
@@ -103,7 +104,7 @@ func histogram(image PPMImage, h []float32) {
 	for j := 0; j <= 3; j++ {
 		for k := 0; k <= 3; k++ {
 			for l := 0; l <= 3; l++ {
-				go split_task(image, x, j, k, l, &wg, h) //parallel code calling
+				go parallel_task(image, x, j, k, l, &wg, h) //parallel code calling
 				x = x + 1
 			}
 		}
