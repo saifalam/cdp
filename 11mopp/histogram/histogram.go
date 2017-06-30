@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"strings"
 	"sync"
@@ -32,34 +31,23 @@ func readPPM(file io.Reader) PPMImage {
 	image := PPMImage{}
 	reader := bufio.NewReader(file)
 
-	PPMType, err := reader.ReadString('\n')
-	if err != nil {
-		log.Fatal(err)
-	} else {
-		for content_satrt_with_hash(PPMType) {
-			PPMType, _ = reader.ReadString('\n')
+	PPMType, _ := reader.ReadString('\n')
+
+	for content_satrt_with_hash(PPMType) {
+		PPMType, _ = reader.ReadString('\n')
+	}
+	if strings.Trim(PPMType, "\n\t") == "P6" {
+		size, _ := reader.ReadString('\n')
+		for content_satrt_with_hash(size) {
+			size, _ = reader.ReadString('\n')
 		}
-		if strings.Trim(PPMType, "\n\t") == "P6" {
-			size, err := reader.ReadString('\n')
-			if err != nil {
-				log.Fatal(err)
-			} else {
-				for content_satrt_with_hash(size) {
-					size, _ = reader.ReadString('\n')
-				}
-				fmt.Sscanf(size, "%d %d", &image.width, &image.height)
-				pixel, err := reader.ReadString('\n')
-				if err != nil {
-					log.Fatal(err)
-				} else {
-					for content_satrt_with_hash(pixel) {
-						pixel, _ = reader.ReadString('\n')
-					}
-					if strings.Trim(pixel, "\n\t") == "255" {
-						//fmt.Println(pixel)
-					}
-				}
-			}
+		fmt.Sscanf(size, "%d %d", &image.width, &image.height)
+		pixel, _ := reader.ReadString('\n')
+		for content_satrt_with_hash(pixel) {
+			pixel, _ = reader.ReadString('\n')
+		}
+		if strings.Trim(pixel, "\n\t") == "255" {
+			//fmt.Println(pixel)
 		}
 	}
 
