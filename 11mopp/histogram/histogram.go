@@ -87,7 +87,8 @@ func parallel_task(image PPMImage, x, j, k, l int, wg *sync.WaitGroup, h []float
 	}
 }
 
-func histogram(image PPMImage, h []float32) {
+func histogram(image PPMImage) []float32 {
+	h := make([]float32, 64)
 	wg := sync.WaitGroup{}
 	wg.Add(64)
 
@@ -101,12 +102,13 @@ func histogram(image PPMImage, h []float32) {
 		}
 	}
 	wg.Wait()
+	return h
 }
 
 func main() {
 	image := readPPM(os.Stdin)
-	h := make([]float32, 64)
-	histogram(image, h)
+	//h := make([]float32, 64)
+	h := histogram(image)
 	for i := 0; i < len(h); i++ {
 		fmt.Printf("%0.3f ", h[i])
 	}
