@@ -66,4 +66,7 @@ fi
 IMAGE=$(docker images | grep '$USERNAME' | awk '{ print $3 }' | tr '\n' ' ')
 if [ ! -z "$IMAGE" ]; then
 	 docker rmi $IMAGE
+     docker rmi $ORIG_IMAGE || true
+     # we had some issues with storage space, therefore we remove all removable (unused) images here
+     docker rmi `docker images -q` || true
 fi
