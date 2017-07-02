@@ -27,7 +27,7 @@ func content_satrt_with_hash(content string) bool {
 }
 
 //Read input image
-func readPPM(file io.Reader) PPMImage {
+func readPPM(file io.Reader) *PPMImage {
 	image := PPMImage{}
 	reader := bufio.NewReader(file)
 
@@ -60,11 +60,11 @@ func readPPM(file io.Reader) PPMImage {
 		b, _ := reader.ReadByte()
 		image.data[i] = PPMPixel{red: (int(r) * 4) / 256, green: (int(g) * 4) / 256, blue: (int(b) * 4) / 256}
 	}
-	return image
+	return &image
 }
 
 //parallel function, distributed in cores
-func parallel_task(image PPMImage, x, j, k, l int, wg *sync.WaitGroup, h []float32) {
+func parallel_task(image *PPMImage, x, j, k, l int, wg *sync.WaitGroup, h []float32) {
 	defer wg.Done()
 	count := 0
 	for i := 0; i < (image.width * image.height); i++ {
@@ -75,7 +75,7 @@ func parallel_task(image PPMImage, x, j, k, l int, wg *sync.WaitGroup, h []float
 	}
 }
 
-func histogram(image PPMImage) []float32 {
+func histogram(image *PPMImage) *[]float32 {
 	h := make([]float32, 64)
 	wg := sync.WaitGroup{}
 	wg.Add(64)
@@ -90,15 +90,14 @@ func histogram(image PPMImage) []float32 {
 		}
 	}
 	wg.Wait()
-	return h
+	return &h
 }
 
 func main() {
 	image := readPPM(os.Stdin)
-	//h := make([]float32, 64)
 	h := histogram(image)
-	for i := 0; i < len(h); i++ {
-		fmt.Printf("%0.3f ", h[i])
+	for i := 0; i < 64; i++ {
+		fmt.Printf("%0.3f ", (*h)[i])
 	}
 	fmt.Printf("\n")
 }
