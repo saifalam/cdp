@@ -96,7 +96,7 @@ func histogram(image *PPMImage) *[]float32 {
 func main() {
 	image := readPPM(os.Stdin)
 	h := histogram(image)
-	for i := 0; i < 64; i++ {
+	for i := 0; i < len(*(h)); i++ {
 		fmt.Printf("%0.3f ", (*h)[i])
 	}
 	fmt.Printf("\n")
