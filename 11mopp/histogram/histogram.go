@@ -78,7 +78,7 @@ func parallel_task(image *PPMImage, x, j, k, l int, wg *sync.WaitGroup, h []floa
 func histogram(image *PPMImage) *[]float32 {
 	h := make([]float32, 64)
 	wg := sync.WaitGroup{}
-	wg.Add(64)
+	wg.Add(2)
 
 	x := 0
 	for j := 0; j <= 3; j++ { //red
