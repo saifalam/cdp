@@ -26,7 +26,7 @@ type Grammar struct {
 	productions                                        []ProductionRule
 }
 
-func read_input(scanner *bufio.Scanner) Grammar {
+func read_input(scanner *bufio.Scanner) *Grammar {
 	grammar := Grammar{}
 	productionRule := ProductionRule{}
 
@@ -52,7 +52,7 @@ func read_input(scanner *bufio.Scanner) Grammar {
 			break
 		}
 	}
-	return grammar
+	return &grammar
 }
 
 func any_empty(s Stack) bool {
@@ -112,7 +112,7 @@ func eliminate_common_prefix(currentString, inputString []string) ([]string, []s
 	return currentString, inputString
 }
 
-func is_terminal(g Grammar, s []string) bool {
+func is_terminal(g *Grammar, s []string) bool {
 	for i := 0; i < len(g.terminalSymbols); i++ {
 		if g.terminalSymbols[i] == s[0] {
 			return true
@@ -121,11 +121,11 @@ func is_terminal(g Grammar, s []string) bool {
 	return false
 }
 
-func is_nonterminal(g Grammar, s []string) bool {
+func is_nonterminal(g *Grammar, s []string) bool {
 	return !is_terminal(g, s)
 }
 
-func exists_non_terminal(g Grammar, s []string) bool {
+func exists_non_terminal(g *Grammar, s []string) bool {
 	if s != nil && len(s) > 0 {
 		for i := 0; i < len(g.nonTerminalSymbols); i++ {
 			if g.nonTerminalSymbols[i] == s[0] {
@@ -136,7 +136,7 @@ func exists_non_terminal(g Grammar, s []string) bool {
 	return false
 }
 
-func begins_with_terminal(g Grammar, s []string) bool {
+func begins_with_terminal(g *Grammar, s []string) bool {
 	if s != nil && len(s) > 0 {
 		if is_terminal(g, s) {
 			return true
@@ -150,7 +150,7 @@ func to_string(strArray []string) string {
 	return s
 }
 
-func evaluate_leftmost_derivation(g Grammar, s []string) []string {
+func evaluate_leftmost_derivation(g *Grammar, s []string) []string {
 	var LMDerivations []string
 	for i := 0; i < len(g.productions); i++ {
 		if to_string(s) == to_string(g.productions[i].left) {
@@ -160,7 +160,7 @@ func evaluate_leftmost_derivation(g Grammar, s []string) []string {
 	return LMDerivations
 }
 
-func find_left_most_nonterminal(g Grammar, currentString []string) []string {
+func find_left_most_nonterminal(g *Grammar, currentString []string) []string {
 	var LMNonTerminal []string
 	for i := 0; i < len(currentString); i++ {
 		if is_nonterminal(g, strings.Fields(strings.Trim(currentString[i], "\n\t"))) {
@@ -171,7 +171,7 @@ func find_left_most_nonterminal(g Grammar, currentString []string) []string {
 	return LMNonTerminal
 }
 
-func get_all_strings_after_nonterminal(g Grammar, s []string) []string {
+func get_all_strings_after_nonterminal(g *Grammar, s []string) []string {
 	var result []string
 	for i := 1; i < len(s); i++ {
 		result = append(result, s[i])
@@ -190,7 +190,7 @@ func remove_all_rules(s Stack) Stack {
 	return s
 }
 
-func evaluate_string_parsing(grammar Grammar, eval Stack) Stack {
+func evaluate_string_parsing(grammar *Grammar, eval Stack) Stack {
 	// Rule no: 01 (Eliminate common prefix)
 	reducedEval := reduce(eval)
 
@@ -245,7 +245,7 @@ func evaluate_string_parsing(grammar Grammar, eval Stack) Stack {
 	return reducedEval
 }
 
-func parse_recursive_descent(g Grammar) Stack {
+func parse_recursive_descent(g *Grammar) Stack {
 	eval := Stack{}
 	eval.inputString = g.analyzeString
 	eval.currentString = g.startSymbol
