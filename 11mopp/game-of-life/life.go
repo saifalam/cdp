@@ -12,6 +12,8 @@ import (
 var splitTask = make(chan data)
 var combineTask = make(chan data)
 
+var numOfCPUS = runtime.NumCPU()
+
 type GOL struct {
 	board [][]int
 	size  int
@@ -60,7 +62,7 @@ func assign_data(board GOL, chunkId, i, totalRow, chunkSize int) data {
 // split the board to create a chunk of data to be executed
 func split_board(board GOL, splitTask chan data) {
 	chunkId := 0
-	chunkSize := runtime.NumCPU()
+	chunkSize := numOfCPUS
 	for i := 0; i < board.size; i = i + chunkSize {
 		splitTask <- assign_data(board, chunkId, i, chunkSize, chunkSize)
 		chunkId = chunkId + 1
@@ -70,7 +72,7 @@ func split_board(board GOL, splitTask chan data) {
 // combine every splited task result to get the accumulated or final result
 func combine_board(board GOL, combineTask <-chan data) GOL {
 	newBoard := make_board(board.size)
-	total_chunk := int(math.Ceil(float64(float32(board.size) / float32(runtime.NumCPU()))))
+	total_chunk := int(math.Ceil(float64(float32(board.size) / float32(numOfCPUS))))
 	for i := 0; i < total_chunk; i++ {
 		result := <-combineTask
 		k := result.chunkid * result.chunkSize
@@ -141,7 +143,7 @@ func game_rules(input data) data {
 }
 
 func worker(splitTask <-chan data, combineTask chan<- data) {
-	for i := 0; i < runtime.NumCPU(); i++ {
+	for i := 0; i < numOfCPUS; i++ {
 		go func() {
 			for {
 				input := <-splitTask
@@ -152,6 +154,7 @@ func worker(splitTask <-chan data, combineTask chan<- data) {
 	}
 }
 
+//Return the final output of life board
 func play(board GOL) GOL {
 	newBoard := make_board(board.size)
 	go split_board(board, splitTask)
