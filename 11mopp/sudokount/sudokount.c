@@ -309,7 +309,7 @@ static int search (sudoku *s, int status) {
     if (solved) {
         // s->sol_count
 
-        #pragma omp atomic
+        //#pragma omp atomic
         solCount++;
 
         return SUDOKU_SOLVE_STRATEGY == SUDOKU_SOLVE;
@@ -321,11 +321,11 @@ static int search (sudoku *s, int status) {
     int minJ = -1;
     int ret = 0;
 
-    //cell_v **values_bkp = malloc (sizeof (cell_v *) * s->dim);
-    //for (i = 0; i < s->dim; i++)
-       // values_bkp[i] = malloc (sizeof (cell_v) * s->dim);
+    cell_v **values_bkp = malloc (sizeof (cell_v *) * s->dim);
+    for (i = 0; i < s->dim; i++)
+        values_bkp[i] = malloc (sizeof (cell_v) * s->dim);
 
-    //#pragma omp parallel
+    #pragma omp parallel
     for (i = 0; i < s->dim; i++)
         for (j = 0; j < s->dim; j++) {
             int used = cell_v_count(&s->values[i][j]);
@@ -336,33 +336,33 @@ static int search (sudoku *s, int status) {
             }
         }
 
-    #pragma omp parallel
+    //#pragma omp parallel
     for (k = 1; k <= s->dim; k++) {
         if (cell_v_get(&s->values[minI][minJ], k))  {
-            //for (i = 0; i < s->dim; i++)
-                //for (j = 0; j < s->dim; j++)
-                    //values_bkp[i][j] = s->values[i][j];
-                    sudoku *clone = clone_sudoku(s);
+            for (i = 0; i < s->dim; i++)
+                for (j = 0; j < s->dim; j++)
+                    values_bkp[i][j] = s->values[i][j];
+                    //sudoku *clone = clone_sudoku(s);
 
-            if (search (clone, assign(clone, minI, minJ, k))) {
+            if (search (s, assign(s, minI, minJ, k))) {
                 ret = 1;
-                //goto FR_RT;
-                for (i = 0; i < clone->dim; i++)
-                    free(clone->values[i]);
-                free (clone->values);
+                goto FR_RT;
+                for (i = 0; i < s->dim; i++)
+                    free(s->values[i]);
+                free (s->values);
             }
-            /*else {
+            else {
                 for (i = 0; i < s->dim; i++)
                     for (j = 0; j < s->dim; j++)
                         s->values[i][j] = values_bkp[i][j];
-            }*/
+            }
         }
     }
 
-    /*FR_RT:
-    for (i = 0; i < clone->dim; i++)
+    FR_RT:
+    for (i = 0; i < s->dim; i++)
         free(values_bkp[i]);
-    free (values_bkp);*/
+    free (values_bkp);
 
     return ret;
 }
