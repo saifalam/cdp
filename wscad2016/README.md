@@ -32,7 +32,7 @@ Game-of-life   |   Histogram
 
 
 
-## Performance Benchmark ##
+# Performance Benchmarking: #
 
 
 For evaluating the performance of this solutions I have used an excellent benchmarking tool developed by Franz using `rust`. See details [here](https://github.com/fzgregor/cds-lab-2017)
